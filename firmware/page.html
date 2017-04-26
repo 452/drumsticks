@@ -1,0 +1,49 @@
+<html>
+<head>
+<script>
+window.addEventListener("load", function(){
+console.info('start')
+var canvas = document.getElementById('color');
+var context = canvas.getContext('2d');
+var connection = new WebSocket('ws://192.168.220.136:81');
+connection.binaryType = "arraybuffer";
+connection.onopen = function () {
+	console.info('onopen')
+	connection.send('Message from Browser to ESP8266 yay its Working!! ' + new Date()); 
+};
+connection.onerror = function (error) {
+	console.log('WebSocket Error ', error);
+};
+connection.onmessage = function (e) {
+	var buffer = e.data;
+	var packet = new DataView(buffer);
+	var ambient = packet.getUint8(0);
+	var red = packet.getUint16(1);
+	var green = packet.getUint16(3);
+	var blue = packet.getUint16(5);
+	var color = RGB2HTML(red, green, blue);
+	console.log('Ambient: %s; Red: %s; Green: %s; Blue: %s; Color: %s;', ambient, red, green, blue, color);
+	context.clearRect(0,0,canvas.width,canvas.height);
+	context.rect(0, 0, 1000, 1000);
+	context.fillStyle = RGB2HTML(red, green, blue);
+	context.fill();
+};
+function rgb(r, g, b){
+  r = Math.floor(r);
+  g = Math.floor(g);
+  b = Math.floor(b);
+  return ["rgb(",r,",",g,",",b,")"].join("");
+}
+function RGB2HTML(red, green, blue)
+{
+    var decColor =0x1000000+ blue + 0x100 * green + 0x10000 *red ;
+    return '#'+decColor.toString(16).substr(1);
+}
+});
+</script>
+
+</head>
+<body>
+<canvas id="color"></canvas>
+</body>
+</html>
